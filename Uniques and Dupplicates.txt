@@ -1,0 +1,44 @@
+Sub CompareColumns_Get_Unique()
+
+    Dim i As Integer, j As Integer
+    Dim FirstEmptyRow_A As Integer, FirstEmptyRow_C As Integer
+    FirstEmptyRow_A = Cells(Rows.Count, 1).End(xlUp).Offset(1, 0).Row
+    FirstEmptyRow_C = Cells(Rows.Count, 1).End(xlUp).Offset(1, 0).Row
+    
+    FirstEmptyRow_A = FirstEmptyRow_A - 1
+    FirstEmptyRow_C = FirstEmptyRow_C - 1
+    
+    For i = 1 To WorksheetFunction.Max(FirstEmptyRow_A, FirstEmptyRow_C)
+        For j = 1 To WorksheetFunction.Min(FirstEmptyRow_A, FirstEmptyRow_C)
+            If Range("C" & j) = Range("A" & i) Then
+                Range("D" & i) = ""
+                Exit For
+            ElseIf j = WorksheetFunction.Min(FirstEmptyRow_A, FirstEmptyRow_C) Then
+                Range("D" & i) = "Unique"
+            End If
+        Next j
+    Next i
+
+End Sub
+
+'-------------------------------------------------------------------------------------------------------------
+Sub CompareColumns_Get_Dupplicate()
+
+    Dim i As Integer, j As Integer
+    Dim FirstEmptyRow_A As Integer, FirstEmptyRow_C As Integer
+    FirstEmptyRow_A = Cells(Rows.Count, 1).End(xlUp).Offset(1, 0).Row
+    FirstEmptyRow_C = Cells(Rows.Count, 3).End(xlUp).Offset(1, 0).Row
+    
+    FirstEmptyRow_A = FirstEmptyRow_A - 1
+    FirstEmptyRow_C = FirstEmptyRow_C - 1
+    
+    For i = 1 To WorksheetFunction.Max(FirstEmptyRow_A, FirstEmptyRow_C)
+        For j = 1 To WorksheetFunction.Min(FirstEmptyRow_A, FirstEmptyRow_C)
+            If Range("C" & j) = Range("A" & i) Then
+                Range("B" & i) = "Dupp"
+                Exit For
+            End If
+        Next j
+    Next i
+
+End Sub
