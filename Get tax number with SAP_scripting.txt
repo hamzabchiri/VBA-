@@ -1,0 +1,108 @@
+Sub FK03_GET_TAX_NUM()
+
+    '<SAP LOGON
+    
+        'CALL SAP SESSION
+            Dim Appl As Object
+            Dim Connection As Object
+            Dim session As Object
+            Dim WshShell As Object
+            Dim SapGui As Object
+                        
+            Shell "C:\Program Files (x86)\SAP\FrontEnd\SAPgui\saplogon.exe", 4
+            
+            Set WshShell = CreateObject("WScript.Shell")
+            
+            Do Until WshShell.AppActivate("SAP Logon")
+                Application.Wait Now + TimeValue("0:00:01")
+            Loop
+            
+            WshShell.SendKeys "% n"
+            
+            Set WshShell = Nothing
+            
+            Application.Wait Now + TimeValue("0:00:01")
+            
+            On Error Resume Next
+            Set SapGui = GetObject("SAPGUI")
+            Set Appl = SapGui.GetScriptingEngine
+            Set Connection = Appl.OpenConnection("Finance Live", True)
+            Set session = Connection.Children(0)
+            
+            
+             If Err Then
+                MsgBox "No SAP session was found. Please open SAP/Check your Network.", vbCritical + vbSystemModal, "DXBS Cancún"
+                Err.Clear
+                Exit Sub
+                End If
+            On Error GoTo 0
+                
+                  
+        'MULTIPLE LOGON
+MSGHANDLER_0:
+            Set SAPsession = session.Children
+            windowCnt = SAPsession.Count
+        
+            If windowCnt > 1 Then
+                On Error Resume Next
+                session.FindById("wnd[1]/usr/radMULTI_LOGON_OPT2").Select
+                session.FindById("wnd[1]/usr/radMULTI_LOGON_OPT2").SetFocus
+                session.FindById("wnd[1]/tbar[0]/btn[0]").Press
+                session.FindById("wnd[0]").SendVKey 0 'enter
+                On Error GoTo 0
+            End If
+               
+'SAP LOGON END>
+
+
+'START SAP SCRIPTING
+
+
+'SAP SCRIPT VARIABLES
+Dim strIN_CoCode As String
+Dim strIN_Supplier As String
+Dim strOUT_VAT As String
+Dim intCurrent_row As Integer
+
+
+
+'DECLARE VARIABLES
+    intCurrent_row = 8
+    strIN_CoCode = Range("A" & intCurrent_row).Value
+    strIN_Supplier = Range("B" & intCurrent_row).Value
+
+
+Do Until strIN_CoCode = ""
+
+
+        'ENTER TRANSACTION FK03 (DISPLAY VENDOR)
+                session.FindById("wnd[0]/tbar[0]/okcd").Text = "******"
+                session.FindById("wnd[0]").SendVKey 0
+        'ENTER VENDOR NUMBER
+                session.FindById("wnd[0]/usr/ctxtRF02K-LIFNR").Text = strIN_Supplier
+        'ENTER COMPANY CODE
+                session.FindById("wnd[0]/usr/ctxtRF02K-BUKRS").Text = strIN_CoCode
+        'DESELECT ALL
+                session.FindById("wnd[0]/tbar[1]/btn[8]").Press
+        'SELECT "CONTROL" CHECKBOX ONLY
+                session.FindById("wnd[0]/usr/chkRF02K-D0120").Selected = True
+        'ENTER DISPLAY VENDOR: CONTROL SCREEN
+                session.FindById("wnd[0]").SendVKey 0
+         'COPY TAX NUMBER 1.
+                strOUT_VAT = session.FindById("wnd[0]/usr/txtLFA1-STCD1").Text
+                Range("C" & intCurrent_row).Value = strOUT_VAT
+        'INCREMENT VARIABLES
+            intCurrent_row = intCurrent_row + 1
+            strIN_CoCode = Range("A" & intCurrent_row).Value
+            strIN_Supplier = Range("B" & intCurrent_row).Value
+
+Loop
+
+    
+    session.FindById("wnd[0]/tbar[0]/okcd").Text = "/NEX"
+    MsgBox "Finished", vbInformation + vbSystemModal, "DXBS Cancún"
+      
+'MACRO END>
+
+End Sub
+
