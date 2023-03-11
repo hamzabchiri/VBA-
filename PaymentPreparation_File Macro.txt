@@ -1,0 +1,334 @@
+Sub Payment()
+
+
+
+     mypath = "FolderPath"
+
+          Agency = Dir(mypath & "*.xls*")
+          
+          
+          Do While Agency <> ""
+          Workbooks.Open mypath & Agency
+          Workbooks(Agency).Activate
+          
+         
+        '-----------------------------
+        '-----------------------------
+        '-----------------------------
+        
+        Range("A:B,E:F,G:G,J:J,L:L").Select
+        Selection.Delete
+        
+        
+        'Filter column B o,ly keep DG DR
+        
+        Columns("B:B").Select
+        Selection.AutoFilter
+        Range("$B$1:$B$264").AutoFilter Field:=1, Criteria1:="DG", _
+        Operator:=xlOr, Criteria2:="=DR"
+        'Insert column with file name
+        
+        Dim FileName As String
+        Dim FirstEmptyRow_A As Integer
+
+        FileName = Left(ActiveWorkbook.Name, InStrRev(ActiveWorkbook.Name, ".") - 1)
+        Range("A1").EntireColumn.Insert
+        FileName = Left(FileName, 10)
+        FirstEmptyRow_A = Cells(Rows.Count, 2).End(xlUp).Offset(1, 0).Row
+        FirstEmptyRow_A = FirstEmptyRow_A - 1
+        Range("A1:A" & FirstEmptyRow_A).value = FileName
+        Range("A:F").Select
+        Selection.Copy
+        Sheets.Add.Name = "NewSheet"
+        Range("A:F").PasteSpecial Paste:=xlPasteValues
+        FirstEmptyRow_Agency = Cells(Rows.Count, 1).End(xlUp).Offset(1, 0).Row
+        FirstEmptyRow_Agency = FirstEmptyRow_Agency - 1
+        Range("E2:E" & FirstEmptyRow_Agency).Select
+        Selection.NumberFormat = "dd/mm/yy;@"
+        Range("F2:F" & FirstEmptyRow_Agency).Select
+        Selection.NumberFormat = "#,##0.00"
+        
+            [B:B].Select
+             With Selection
+            .NumberFormat = "General"
+            .value = .value
+            
+             End With
+            
+        Workbooks.Open "Master File Path"
+
+     Range("B:B").Select
+              Selection.TextToColumns Destination:=Range("B1"), DataType:=xlDelimited, _
+             TextQualifier:=xlDoubleQuote, ConsecutiveDelimiter:=False, Tab:=True, _
+              Semicolon:=False, Comma:=False, Space:=False, Other:=False, FieldInfo _
+            :=Array(1, 1), TrailingMinusNumbers:=True
+             Selection.NumberFormat = "General"
+            
+          Dim w1 As Worksheet, w2 As Worksheet
+          Dim c As Range, FR As Long
+           
+
+          Application.ScreenUpdating = False
+        
+        
+         Set w1 = Worksheets("Nsheet")
+         Set w2 = Workbooks(Agency).Worksheets("NewSheet")
+         
+         
+       
+        '----------------------------------
+        '----------------------------------
+        
+         For Each c In w1.Range("B4", w1.Range("B" & Rows.Count).End(xlUp))
+         FR = 0
+         On Error Resume Next
+         FR = Application.Match(c, w2.Columns("B"), 0)
+         On Error GoTo 0
+         If FR <> 0 Then w2.Range("I" & FR).value = "D"
+       
+        
+         Next c
+         Application.ScreenUpdating = True
+        
+         Workbooks(Agency).Worksheets("NewSheet").Activate
+         Columns("I:I").Select
+         Selection.AutoFilter
+         Range("$I$1:$I$264").AutoFilter Field:=1, Criteria1:=""
+         
+          Range("A:F").Select
+          Selection.Copy
+          Sheets.Add.Name = "NewInvoices"
+          Range("A:F").PasteSpecial
+         
+         
+        
+        
+        
+        
+        
+         Dim agency_numberStartRow As Long, Agency_startEndRow As Long
+         
+        Workbooks("Master_File").Activate
+        Worksheets("Nsheet").Activate
+          
+         With Sheets("Nsheet")
+         agency_numberStartRow = .Range("A:A").Find(what:=FileName, after:=.Range("A1")).Row
+         Agency_startEndRow = .Range("A:A").Find(what:=FileName, after:=.Range("A1"), SearchDirection:=xlPrevious).Row
+        
+         
+          End With
+       
+ 
+         Workbooks(Agency).Worksheets("NewInvoices").Activate
+         FirstEmptyRowOF_NewInvoices = Cells(Rows.Count, 1).End(xlUp).Offset(1, 0).Row
+      
+         Range("A2:W" & FirstEmptyRowOF_NewInvoices - 1).Copy
+      
+       
+          Workbooks("Master_File").Activate
+         Worksheets("Nsheet").Activate
+           
+           Range("A" & Agency_startEndRow + 1).EntireRow.Insert Shift:=xlDown
+           Workbooks(Agency).Close SaveChanges:=False
+ Agency = Dir
+        
+Loop
+End Sub
+  
+-----------------------------------------------------------------------------------------------------------------------
+
+Sub Payment2()
+
+
+ Workbooks.Open "Master File Path"
+
+
+'Add Column before Last Column
+        Dim LastRow As Integer, LastCol As Long
+
+        'LastRow = Cells(Rows.Count, "Y").End(xlUp).Row
+        LastCol = Cells(3, Columns.Count).End(xlToLeft).Column
+
+        Cells(3, LastCol).Resize(, 1).EntireColumn.Insert
+        Cells(3, LastCol).value = "New Payment " & Date
+ 
+        Cells(3, LastCol).ColumnWidth = 23
+
+
+
+
+ 'Get_Total_Invoices
+        
+          'mypath = "Folder Path"
+
+          'Amounts = Dir(mypath & "*.xls*")
+            
+        
+        
+          Workbooks.Open "File Path"
+          'Workbooks(Amounts).Activate
+        
+        
+             Dim i As Long
+             Dim countDict As Variant
+             Dim category As Variant
+             Dim value As Variant
+             Dim data As Variant
+             Dim d As Variant
+             Dim xSh As Worksheet
+             Application.ScreenUpdating = False
+             For Each xSh In Worksheets
+             xSh.Select
+        
+
+
+
+            Set countDict = CreateObject("Scripting.Dictionary")
+
+          'Move the Col D, Paid Amt to Col B and Move the Col E, Invoices to Col A
+              Columns("E").Cut
+              Columns("A").Insert Shift:=xlToRight
+              Columns("E").Cut
+              Columns("B").Insert Shift:=xlToRight
+
+
+             data = ActiveSheet.UsedRange 'Assumes data is in columns A/B
+
+
+
+         'Populate the dictionary: key = category / Item = count
+                 For i = LBound(data, 1) To UBound(data, 1)
+                 category = data(i, 1)
+                 value = data(i, 2)
+                 If countDict.exists(category) Then
+                 countDict(category) = countDict(category) + value 'if we have already seen that category, add to the total
+                 Else
+                 countDict(category) = value 'first time we find that category, create it
+                 End If
+                 Next i
+
+
+
+                 'Copy dictionary into an array
+                  ReDim data(1 To countDict.Count, 1 To 2) As Variant
+
+
+
+
+                  i = 1
+                  For Each d In countDict
+                  data(i, 1) = d
+                  data(i, 2) = countDict(d)
+                  i = i + 1
+                  Next d
+
+
+
+             'Puts the result back in the sheet in column D/E, including headers
+                 With ActiveSheet
+                  .Range("G1").Resize(UBound(data, 1), UBound(data, 2)) = data
+                   End With
+                   Next
+         '--------------------------------------
+         '--------------------------------------
+         '--------------------------------------
+         'match the amount from total_sheet  with invoice in the master_file
+               
+          'Workbooks(Amounts).Activate
+         
+           
+          Sheets.Add.Name = "Total_invoices"
+          
+          Range("A1").value = "Invoice"
+          Range("B1").value = "Paid Amt"
+          FirstEmptyRowOF_Invoices = Cells(Rows.Count, 1).End(xlUp).Offset(1, 0).Row
+          Last_Row = Range("A1").End(xlDown).Row
+          
+          
+          'Workbooks(Amounts)
+          Worksheets("FTI").Activate
+          FirstEmptyRowOF_G = Cells(Rows.Count, 1).End(xlUp).Offset(1, 0).Row
+          Range("G2:H2" & FirstEmptyRowOF_G).Select
+          Selection.Copy
+          
+          Worksheets("Total_invoices").Activate
+          Range("A2").Select
+          Range("A2").PasteSpecial
+          
+        
+        
+          'Workbooks(Amounts)
+          Worksheets("5VF").Activate
+           FirstEmptyRowOF_M = Cells(Rows.Count, 1).End(xlUp).Offset(1, 0).Row
+          Range("G2:H2" & FirstEmptyRowOF_M).Select
+          Selection.Copy
+          
+          Worksheets("Total_invoices").Activate
+          Range("A2" & FirstEmptyRowOF_Invoices).Select
+          Range("A2" & FirstEmptyRowOF_Invoices).PasteSpecial
+          
+          
+          'Workbooks(Amounts)
+          Worksheets("BX").Activate
+          FirstEmptyRowOF_F = Cells(Rows.Count, 1).End(xlUp).Offset(1, 0).Row
+          
+          Range("G2:H2" & FirstEmptyRowOF_F).Select
+          Selection.Copy
+          
+          Worksheets("Total_invoices").Activate
+          Range("A2" & FirstEmptyRowOF_M).Select
+          Range("A2" & FirstEmptyRowOF_M).PasteSpecial
+          
+          
+          Columns("A:B").Select
+          Selection.SpecialCells(xlCellTypeBlanks).Select
+          Application.CutCopyMode = False
+          Selection.EntireRow.Delete
+          
+          
+          Workbooks("Master_File").Worksheets("Nsheet").Activate
+               Dim rng As Range
+               Dim lRow As Long, lCol As Long
+               lCol = Cells(3, Columns.Count).End(xlToLeft).Column
+                lRow = Range("A" & Rows.Count).End(xlUp).Row
+                Set rng = Range(Cells(4, lCol - 1), Cells(4, lCol - 1))
+               With rng
+               Debug.Print .Address
+               End With
+              rng.Select
+              ActiveCell.FormulaR1C1 = "=IFERROR(VLOOKUP(@C[-23],[Amounts.xlsx]Total_invoices!C1:C2,2,0),"""")"
+          
+               'rng.Select
+              'Selection.AutoFill Destination:=Range(Cells(4, lCol - 1))
+              Cells(4, lCol - 1).Select
+              Selection.AutoFill Destination:=Range(Cells(4, lCol - 1), Cells(lRow, lCol - 1))
+              
+        Application.CutCopyMode = False
+
+    Workbooks("Master_File").Close SaveChanges:=True
+    Workbooks("Amounts").Close SaveChanges:=True
+
+
+
+
+End Sub
+-------------------------------------------------------------------------------------------------------------------
+Sub Payment_Complete_Macro()
+
+Payment
+Payment2
+
+End Sub
+
+
+
+
+
+
+
+
+
+
+
+
+
