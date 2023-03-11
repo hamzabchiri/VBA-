@@ -1,0 +1,198 @@
+Sub Formating_Files()
+
+    mypath = "Folder Path"
+
+    KAinput = Dir(mypath & "*.xls*")
+  
+    Do While KAinput <> ""
+        Workbooks.Open mypath & KAinput
+        Workbooks(KAinput).Activate
+        
+        '''-----------------------------------------
+        '''-----------------------------------------
+        '''-----------------------------------------
+        
+    Dim wb As Workbook
+
+    'Creating the new Workbook with _output suffix
+    Workbooks.Add
+    ActiveWorkbook.SaveAs Filename:="Folder Path" & KAinput & " _Output.xlsx"
+
+    Set wb = ActiveWorkbook
+    'Workbooks("Folder Path" & KAinput & " _Output.xlsx").Activate
+
+    Dim ReSheet As String
+    ReSheet = ActiveSheet.Name
+    Sheets(ReSheet).Name = "Data"
+    
+    Dim ws As Worksheet
+    Set ws = wb.Worksheets("Data")
+
+    'Create the Columns an change Fonts in Destination file
+    ws.Range("A2").Value = "Agenturnummer"
+    ws.Range("A3").Value = "Buchungszeitraum"
+    ws.Range("A4").Value = "Buchungs Nr"
+    ws.Range("B4").Value = "Buchung Datum"
+    ws.Range("C4").Value = "Abflugdat."
+    ws.Range("D4").Value = "DEP"
+    ws.Range("E4").Value = "DES"
+    ws.Range("F4").Value = "Pax-Zahl"
+    ws.Range("G4").Value = "Betrag je Pax"
+    ws.Range("H4").Value = "Buchungsbetrag"
+    ws.Range("I4").Value = "Summen"
+    ws.Range("J4").Value = "Bemerkungen"
+
+
+
+
+
+    
+    ws.Range("A1:J1").Font.Bold = True
+    ws.Range("A1:J4").Select
+    Selection.Font.Bold = True
+    
+    ws.Columns("A:A").ColumnWidth = 17.01
+    ws.Columns("B:B").ColumnWidth = 17.01
+    ws.Columns("C:C").ColumnWidth = 17.01
+    ws.Columns("D:D").ColumnWidth = 17.01
+    ws.Columns("E:E").ColumnWidth = 17.01
+    ws.Columns("F:F").ColumnWidth = 17.01
+    ws.Columns("G:G").ColumnWidth = 17.01
+    ws.Columns("H:H").ColumnWidth = 17.01
+    ws.Columns("I:I").ColumnWidth = 17.01
+    ws.Columns("J:J").ColumnWidth = 17.01
+    
+    
+    '---------------------------------------------------------------------------------------------
+        
+    '1 - Copy column B from Source file to Destination file as Buchungs Nr
+    Workbooks(KAinput).Activate
+    
+    '****FIRST the column D should be filtered to keep NS
+    Columns("D:D").Select
+    Selection.AutoFilter
+    ActiveSheet.Range("$D$1:$D$264").AutoFilter Field:=1, Criteria1:="NS"
+    
+    
+    FirstEmptyRowOF = Cells(Rows.Count, 1).End(xlUp).Offset(1, 0).Row
+    Range("B2:B" & FirstEmptyRowOF - 1).Select
+    Selection.Copy
+    Workbooks(KAinput & " _Output.xlsx").Activate
+    Range("A5").Select
+    Range("A5").PasteSpecial Paste:=xlPasteValues
+    
+    '2 - Copy column I from Source file to Destination file as Buchung Datum
+    Workbooks(KAinput).Activate
+    Application.CutCopyMode = False
+    FirstEmptyRowOF = Cells(Rows.Count, 1).End(xlUp).Offset(1, 0).Row
+    Range("I2:I" & FirstEmptyRowOF - 1).Select
+    Selection.Copy
+    Workbooks(KAinput & " _Output.xlsx").Activate
+    Range("B5").Select
+    Range("B5").PasteSpecial Paste:=xlPasteValues
+    
+    '3 - Copy column J from Source file to Destination file as Abflugdatum
+    Workbooks(KAinput).Activate
+    Application.CutCopyMode = False
+    FirstEmptyRowOF = Cells(Rows.Count, 1).End(xlUp).Offset(1, 0).Row
+    Range("J2:J" & FirstEmptyRowOF - 1).Select
+    Selection.Copy
+    Workbooks(KAinput & " _Output.xlsx").Activate
+    Range("C5").Select
+    Range("C5").PasteSpecial Paste:=xlPasteValues
+     
+    '4 - Copy column K from Source file to Destination file as Betrag in EUR
+    Workbooks(KAinput).Activate
+    Application.CutCopyMode = False
+    FirstEmptyRowOF = Cells(Rows.Count, 1).End(xlUp).Offset(1, 0).Row
+    Range("K2:K" & FirstEmptyRowOF - 1).Select
+    Selection.Copy
+    Workbooks(KAinput & " _Output.xlsx").Activate
+    Range("I5").Select
+    Range("I5").PasteSpecial
+    
+    
+    '5 - Copy column Q from Source file to Destination file as Dep
+    Workbooks(KAinput).Activate
+    Application.CutCopyMode = False
+    FirstEmptyRowOF = Cells(Rows.Count, 1).End(xlUp).Offset(1, 0).Row
+    Range("P2:Q" & FirstEmptyRowOF - 1).Select
+    
+    '--> Split Column H (Text) into Columns O(Name), P(Dep) & Q(Des)
+    Dim ws_OrgFile As Worksheet
+    Dim LastRow As Long, i As Long
+    Dim tmpArray() As String
+
+
+    SheetName_Source = ActiveSheet.Name
+    
+    Set ws_OrgFile = Sheets(SheetName_Source)
+
+    With ws_OrgFile
+        LastRow = .Range("H" & .Rows.Count).End(xlUp).Row
+
+        For i = 2 To LastRow
+            If InStr(1, .Range("H" & i).Value, ", ") Then
+                tmpArray = Split(.Range("H" & i).Value, ", ")
+                .Range("O" & i).Value = tmpArray(0)
+                .Range("P" & i).Value = tmpArray(1)
+            End If
+        Next i
+    End With
+    With ws_OrgFile
+        LastRow = .Range("C" & .Rows.Count).End(xlUp).Row
+
+        For i = 2 To LastRow
+            If InStr(1, .Range("P" & i).Value, "-") Then
+                tmpArray = Split(.Range("P" & i).Value, "-")
+                .Range("P" & i).Value = tmpArray(0)
+                .Range("Q" & i).Value = tmpArray(1)
+            End If
+        Next i
+    End With
+    
+
+    Selection.Copy
+    Workbooks(KAinput & " _Output.xlsx").Activate
+    Range("D5").Select
+    Range("D5").PasteSpecial Paste:=xlPasteValues
+    
+     
+   'Close Original File without saving changes and ignore the notification of keeping infos in clipboard
+    Workbooks(KAinput).Activate
+    Application.CutCopyMode = False
+    ActiveWorkbook.Close SaveChanges:=False
+    
+        
+    'Find the First Empty Row:(at the end of area with Data)
+    FirstEmptyRow = Cells(Rows.Count, 1).End(xlUp).Offset(1, 0).Row
+
+    ws.Cells(FirstEmptyRow, 6).Font.Bold = True
+    ws.Cells(FirstEmptyRow, 7).Font.Bold = True
+    
+    
+    'add € symbol to Column G
+    Range("I5:I" & FirstEmptyRow).Select
+    Selection.NumberFormat = "#,##0.00 [$€-de-DE]"
+    
+    'Change Date format Cols B & C to German Dateformat
+    Range("B5:B" & FirstEmptyRow - 1).Select
+    Selection.NumberFormat = "dd.mm.yy;@"
+    Range("C5:C" & FirstEmptyRow - 1).Select
+    Selection.NumberFormat = "dd.mm.yy;@"
+    
+    'Save all the changes and close the new File
+    ActiveWorkbook.Save
+    ActiveWorkbook.Close
+        
+        
+        '''-----------------------------------------
+        '''-----------------------------------------
+        '''-----------------------------------------
+        
+        Application.CutCopyMode = False
+        'Workbooks(KAinput).Close SaveChanges:=False
+        KAinput = Dir
+    Loop
+End Sub
+
