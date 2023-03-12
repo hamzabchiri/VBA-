@@ -1,0 +1,35 @@
+Public Function Get10DigitsNumer(search_str As String)
+Dim regEx As New VBScript_RegExp_55.RegExp
+Dim matches
+    GetStringInParens = ""
+    regEx.Pattern = "[0-11]{10}"
+    regEx.Global = True
+    If regEx.test(search_str) Then
+        Set matches = regEx.Execute(search_str)
+        GetStringInParens = matches(0).SubMatches(0)
+    End If
+End Function
+
+Option Explicit
+Sub Extract10Digits()
+    Dim R As Range, C As Range
+    Dim RE As Object, MC As Object, M As Object
+    Dim i As Long
+
+Set R = Selection
+Set RE = CreateObject("vbscript.regexp")
+With RE
+    .Global = True
+    .Pattern = "\b\d{10}\b"
+    For Each C In R
+        If .test(C.Text) = True Then
+            i = 0
+            Set MC = .Execute(C.Text)
+            For Each M In MC
+                i = i + 1
+                C.Offset(0, i) = M
+            Next M
+        End If
+    Next C
+End With
+End Sub
